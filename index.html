@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Open Farm Management System</title>
+    <style>
+        :root {
+            --bg: #0d1117;
+            --card: #161b22;
+            --border: #30363d;
+            --text: #c9d1d9;
+            --green: #238636;
+            --red: #da3633;
+        }
+
+        body {
+            margin: 0;
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        /* 1. Background Watermark (For all users) */
+        .background-text {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-15deg);
+            font-size: 8vw;
+            font-weight: 900;
+            color: rgba(255, 255, 255, 0.03);
+            z-index: -1;
+            text-transform: uppercase;
+            white-space: nowrap;
+            pointer-events: none;
+        }
+
+        /* 2. Top Left: Tag Management */
+        .top-left { position: fixed; top: 20px; left: 20px; z-index: 100; }
+        .dropdown {
+            display: none; position: absolute; top: 45px; left: 0;
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 6px; min-width: 180px; box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+        }
+        .dropdown div { padding: 12px; border-bottom: 1px solid var(--border); cursor: pointer; }
+        .dropdown div:hover { background: #1f242c; }
+        .add-btn { color: var(--green); font-weight: bold; }
+
+        /* 3. Top Right: Save System */
+        .top-right { position: fixed; top: 20px; right: 20px; z-index: 100; }
+        .save-menu {
+            display: none; position: absolute; top: 45px; right: 0;
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 6px; min-width: 150px;
+        }
+        .save-menu button {
+            width: 100%; padding: 12px; border: none; background: none;
+            color: var(--text); border-bottom: 1px solid var(--border); cursor: pointer;
+        }
+
+        /* Utility Classes */
+        .show { display: block !important; }
+        .btn-ui { 
+            background: var(--card); border: 1px solid var(--border); 
+            color: var(--text); padding: 10px 15px; border-radius: 6px; cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="background-text">Farm Management System</div>
+
+    <div class="top-left">
+        <button class="btn-ui" onclick="toggleMenu('tagMenu')">🏷️ Tag Numbers</button>
+        <div id="tagMenu" class="dropdown">
+            <div id="tagList"></div>
+            <div class="add-btn" onclick="addNewTag()">+ Add New Tag</div>
+        </div>
+    </div>
+
+    <div class="top-right">
+        <button class="btn-ui" onclick="toggleMenu('saveOptions')" style="font-size: 20px;">💾</button>
+        <div id="saveOptions" class="save-menu">
+            <button onclick="confirmAction('Saved')" style="color: var(--green); font-weight: bold;">Save Changes</button>
+            <button onclick="confirmAction('Cancelled')" style="color: var(--red);">Cancel</button>
+        </div>
+    </div>
+
+    <div style="text-align: center;">
+        <h1 id="displayTag">Select a Tag</h1>
+        <p>Public Ledger System</p>
+    </div>
+
+    <script>
+        // Store tags in local memory so any user can save their own numbers
+        let tags = JSON.parse(localStorage.getItem('farm_tags')) || ['TAG-001', 'TAG-002'];
+
+        function toggleMenu(id) {
+            document.querySelectorAll('.dropdown, .save-menu').forEach(m => {
+                if(m.id !== id) m.classList.remove('show');
+            });
+            document.getElementById(id).classList.toggle('show');
+        }
+
+        function renderTags() {
+            const list = document.getElementById('tagList');
+            list.innerHTML = tags.map(t => `<div onclick="selectTag('${t}')">${t}</div>`).join('');
+        }
+
+        function addNewTag() {
+            let n = prompt("Enter the new cattle tag number:");
+            if(n) {
+                tags.push(n);
+                localStorage.setItem('farm_tags', JSON.stringify(tags));
+                renderTags();
+            }
+        }
+
+        function selectTag(t) {
+            document.getElementById('displayTag').innerText = "Cattle ID: " + t;
+            toggleMenu('tagMenu');
+        }
+
+        function confirmAction(action) {
+            alert("Farm Data " + action);
+            toggleMenu('saveOptions');
+        }
+
+        // Initialize
+        renderTags();
+    </script>
+</body>
+                                        </html>
+  
