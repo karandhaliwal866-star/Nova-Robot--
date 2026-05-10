@@ -3,173 +3,226 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>NOVA - Farm Waste Collector</title>
+    <title>NOVA BRAIN PRO - Moga Farm</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     <style>
-        :root {
-            --primary: #00d2ff;
-            --danger: #ff4b2b;
-            --dark: #121212;
-            --gray: #1e1e1e;
+        :root { 
+            --primary: #00d2ff; 
+            --danger: #ff4b2b; 
+            --success: #00ff88; 
+            --dark: #0a0a0a; 
+            --gray: #1e1e1e; 
+            --panel: #252525;
         }
 
-        body {
-            background-color: var(--dark);
-            color: white;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
+        body { 
+            background-color: var(--dark); 
+            color: white; 
+            font-family: 'Segoe UI', Arial, sans-serif; 
+            margin: 0; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .header { 
+            width: 100%; 
+            padding: 10px 0; 
+            background: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%); 
+            text-align: center; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+
+        /* Camera Feed Style */
+        .camera-container { 
+            width: 92%; 
+            max-width: 500px; 
+            margin: 15px 0; 
+            border-radius: 12px; 
+            border: 2px solid #333; 
+            overflow: hidden; 
+            background: #000; 
+            position: relative;
+        }
+        .camera-feed { width: 100%; display: block; height: 240px; object-fit: cover; }
+        .status-dot { position: absolute; top: 10px; right: 10px; width: 10px; height: 10px; background: red; border-radius: 50%; }
+
+        /* Master Power Toggle */
+        .power-section { margin: 10px 0; }
+        .power-btn { 
+            width: 220px; 
+            padding: 18px; 
+            border-radius: 50px; 
+            border: none; 
+            font-size: 18px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            transition: 0.3s; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+            letter-spacing: 1px;
+        }
+        .start-mode { background: var(--success); color: black; }
+        .stop-mode { background: var(--danger); color: white; }
+
+        /* Main Control Interface */
+        .control-panel { 
+            display: flex; 
+            justify-content: space-around; 
             align-items: center;
-            overflow-x: hidden;
+            width: 100%; 
+            max-width: 600px; 
+            padding: 20px 10px; 
+            opacity: 0.2; 
+            pointer-events: none; 
+            transition: 0.4s ease;
         }
+        .active-ui { opacity: 1; pointer-events: auto; }
 
-        .header {
-            width: 100%;
-            padding: 15px;
-            background: linear-gradient(to right, #00d2ff, #3a7bd5);
-            text-align: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        /* Movement D-Pad */
+        .d-pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        .move-btn { 
+            width: 75px; 
+            height: 75px; 
+            border: none; 
+            border-radius: 15px; 
+            background: var(--panel); 
+            color: white; 
+            font-size: 28px; 
+            box-shadow: 0 4px #000;
         }
+        .move-btn:active { transform: translateY(3px); box-shadow: 0 1px #000; background: var(--primary); }
 
-        /* Video Feed Section */
-        .camera-container {
-            width: 90%;
-            max-width: 600px;
-            margin: 20px 0;
-            border: 3px solid var(--gray);
-            border-radius: 15px;
-            overflow: hidden;
-            background: #000;
+        /* Vertical Levers Section */
+        .levers-box { display: flex; gap: 25px; background: var(--panel); padding: 15px; border-radius: 20px; }
+        .lever-wrap { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+        .lever { 
+            appearance: slider-vertical; 
+            width: 35px; 
+            height: 140px; 
+            background: #111; 
+            outline: none;
+            border-radius: 5px;
         }
+        .lever-label { font-size: 11px; font-weight: bold; color: var(--primary); }
 
-        .camera-feed {
-            width: 100%;
-            display: block;
-            min-height: 200px;
+        /* Automation Bar */
+        .auto-bar { 
+            display: flex; 
+            gap: 15px; 
+            width: 90%; 
+            margin-top: 10px; 
+            padding-bottom: 30px;
         }
-
-        /* Control Pad Layout */
-        .controls-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-            margin-bottom: 30px;
+        .auto-btn { 
+            flex: 1; 
+            padding: 16px; 
+            border-radius: 12px; 
+            border: none; 
+            font-weight: bold; 
+            font-size: 14px;
         }
-
-        .btn {
-            width: 85px;
-            height: 85px;
-            border: none;
-            border-radius: 15px;
-            background-color: var(--gray);
-            color: white;
-            font-size: 24px;
-            cursor: pointer;
-            box-shadow: 0 5px #000;
-            transition: all 0.1s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .btn:active {
-            box-shadow: 0 2px #000;
-            transform: translateY(3px);
-            background-color: var(--primary);
-        }
-
-        .btn-stop {
-            background-color: var(--danger);
-            grid-column: 2;
-        }
-
-        /* Automation Section */
-        .automation-panel {
-            background: var(--gray);
-            padding: 20px;
-            border-radius: 20px;
-            width: 90%;
-            max-width: 500px;
-            display: flex;
-            justify-content: space-around;
-            margin-bottom: 50px;
-        }
-
-        .auto-btn {
-            padding: 12px 25px;
-            border-radius: 30px;
-            border: none;
-            font-weight: bold;
-            text-transform: uppercase;
-            cursor: pointer;
-        }
-
-        .rec { background: #ffcc00; color: black; }
-        .play { background: #00ff88; color: black; }
-        .recording { animation: blink 1s infinite; }
-
-        @keyframes blink {
-            50% { opacity: 0.5; }
-        }
+        .recording-active { animation: pulse-red 1s infinite; }
+        @keyframes pulse-red { 50% { background: #ff0000; color: white; } }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <h1 style="margin:0;">NOVA BRAIN v1.0</h1>
-        <small>Connected to Moga Farm Robot</small>
+        <h2 style="margin:0;">NOVA SYSTEM v2.0</h2>
+        <span style="font-size: 12px;">Moga, Punjab • Farm Automation Active</span>
     </div>
 
     <div class="camera-container">
-        <img src="/video_feed" class="camera-feed" alt="Nova Vision Feed">
+        <div id="cam-dot" class="status-dot"></div>
+        <img src="/video_feed" class="camera-feed" alt="Nova Vision Stream">
     </div>
 
-    <div class="controls-grid">
-        <div></div>
-        <button class="btn" onmousedown="send('forward')" onmouseup="send('stop')" ontouchstart="send('forward')" ontouchend="send('stop')">▲</button>
-        <div></div>
-
-        <button class="btn" onmousedown="send('left')" onmouseup="send('stop')" ontouchstart="send('left')" ontouchend="send('stop')">◀</button>
-        <button class="btn btn-stop" onclick="send('stop')">⏹</button>
-        <button class="btn" onmousedown="send('right')" onmouseup="send('stop')" ontouchstart="send('right')" ontouchend="send('stop')">▶</button>
-
-        <div></div>
-        <button class="btn" onmousedown="send('backward')" onmouseup="send('stop')" ontouchstart="send('backward')" ontouchend="send('stop')">▼</button>
-        <div></div>
+    <div class="power-section">
+        <button id="masterBtn" class="power-btn start-mode" onclick="toggleSystem()">SYSTEM START</button>
     </div>
 
-    <div class="automation-panel">
-        <button id="recBtn" class="auto-btn rec" onclick="toggleRecord()">● Record Path</button>
-        <button class="auto-btn play" onclick="playPath()">▶ Repeat Path</button>
+    <div id="uiFrame" class="control-panel">
+        <div class="d-pad">
+            <div></div>
+            <button class="move-btn" onmousedown="sendMove('forward')" onmouseup="sendMove('stop')" ontouchstart="sendMove('forward')" ontouchend="sendMove('stop')">▲</button>
+            <div></div>
+            
+            <button class="move-btn" onmousedown="sendMove('left')" onmouseup="sendMove('stop')" ontouchstart="sendMove('left')" ontouchend="sendMove('stop')">◀</button>
+            <div style="width:75px;"></div>
+            <button class="move-btn" onmousedown="sendMove('right')" onmouseup="sendMove('stop')" ontouchstart="sendMove('right')" ontouchend="sendMove('stop')">▶</button>
+            
+            <div></div>
+            <button class="move-btn" onmousedown="sendMove('backward')" onmouseup="sendMove('stop')" ontouchstart="sendMove('backward')" ontouchend="sendMove('stop')">▼</button>
+            <div></div>
+        </div>
+
+        <div class="levers-box">
+            <div class="lever-wrap">
+                <span class="lever-label">LIFT ARM</span>
+                <input type="range" min="0" max="100" value="0" class="lever" id="liftIn" oninput="sendArm('lift', this.value)">
+            </div>
+            <div class="lever-wrap">
+                <span class="lever-label">SCRAPE</span>
+                <input type="range" min="0" max="100" value="50" class="lever" id="tiltIn" oninput="sendArm('tilt', this.value)">
+            </div>
+        </div>
+    </div>
+
+    <div class="auto-bar">
+        <button id="recBtn" class="auto-btn" style="background:#ffcc00;" onclick="toggleRecord()">● RECORD PATH</button>
+        <button class="auto-btn" style="background:#00ff88;" onclick="socket.emit('automation', 'repeat')">▶ REPEAT PATH</button>
     </div>
 
     <script>
         const socket = io();
-        let isRecording = false;
+        let sysActive = false;
+        let isRec = false;
 
-        function send(dir) {
-            socket.emit('move', {direction: dir});
-        }
+        function toggleSystem() {
+            sysActive = !sysActive;
+            const btn = document.getElementById('masterBtn');
+            const ui = document.getElementById('uiFrame');
+            const dot = document.getElementById('cam-dot');
 
-        function toggleRecord() {
-            isRecording = !isRecording;
-            const btn = document.getElementById('recBtn');
-            if(isRecording) {
-                btn.innerHTML = "■ Stop Recording";
-                btn.classList.add('recording');
-                socket.emit('automation', {action: 'start_record'});
+            if(sysActive) {
+                btn.innerHTML = "SYSTEM STOP";
+                btn.className = "power-btn stop-mode";
+                ui.classList.add('active-ui');
+                dot.style.background = "#00ff88";
+                socket.emit('system', 'enable');
             } else {
-                btn.innerHTML = "● Record Path";
-                btn.classList.remove('recording');
-                socket.emit('automation', {action: 'stop_record'});
+                btn.innerHTML = "SYSTEM START";
+                btn.className = "power-btn start-mode";
+                ui.classList.remove('active-ui');
+                dot.style.background = "red";
+                socket.emit('system', 'disable');
+                sendMove('stop'); // Instant motor cut-off
             }
         }
 
-        function playPath() {
-            socket.emit('automation', {action: 'play_path'});
+        function toggleRecord() {
+            if(!sysActive) return;
+            isRec = !isRec;
+            const btn = document.getElementById('recBtn');
+            if(isRec) {
+                btn.classList.add('recording-active');
+                btn.innerHTML = "STOP RECORDING";
+                socket.emit('automation', 'start_record');
+            } else {
+                btn.classList.remove('recording-active');
+                btn.innerHTML = "● RECORD PATH";
+                socket.emit('automation', 'stop_record');
+            }
         }
+
+        function sendMove(dir) { socket.emit('move', {direction: dir}); }
+        function sendArm(target, val) { socket.emit('arm_control', {part: target, position: val}); }
+
+        // Prevent zoom on mobile buttons
+        document.addEventListener('gesturestart', function(e) { e.preventDefault(); });
     </script>
 </body>
-            </html>
-    
+                                                                                                                                                                          </html>
+                
